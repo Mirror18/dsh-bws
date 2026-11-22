@@ -1,0 +1,64 @@
+{
+  "name": "dsh-bws",
+  "version": "0.3.0",
+  "private": false,
+  "type": "module",
+  "description": "本地加密凭证金库：SQLite + AES-256-GCM，口令派生密钥，git 多远端同步；给 DeepSeek Harness 用的 Web 面板、Agent 工具与命令行。",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "bin",
+    "lib",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "docs",
+    "icon.svg",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "slots"
+      ]
+    }
+  },
+  "engines": {
+    "node": ">=24.9.0"
+  },
+  "license": "Apache-2.0",
+  "bin": {
+    "dsh-bws": "./bin/dsh-bws.mjs"
+  },
+  "scripts": {
+    "test": "node --test test/"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "bitwarden-alternative",
+    "secrets",
+    "vault",
+    "sqlite",
+    "aes-gcm"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mirror18/dsh-bws.git"
+  },
+  "homepage": "https://github.com/Mirror18/dsh-bws",
+  "bugs": {
+    "url": "https://github.com/Mirror18/dsh-bws/issues"
+  }
+}

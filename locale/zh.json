@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Bitwarden 凭证 (bws)",
+    "description": "查看 bws 组织下的项目、密钥名、备注与元数据。值留在 Bitwarden，下一期才按单次调用取值。",
+    "detail": "docs/DETAIL.md"
+  }
+}

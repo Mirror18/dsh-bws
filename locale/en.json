@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Bitwarden Secrets (bws)",
+    "description": "Browse the bws organization: projects, secret keys, notes and metadata. Values stay in Bitwarden and are only fetched for one explicit call in the next phase.",
+    "detail": "docs/DETAIL.md"
+  }
+}

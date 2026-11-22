@@ -1,0 +1,9 @@
+node_modules/
+*.log
+.DS_Store
+# 本地金库与钥匙，绝不入库
+vault.db
+vault.db-*
+*.enc
+key
+passphrase
