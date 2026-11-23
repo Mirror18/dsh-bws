@@ -6,7 +6,7 @@
 | 消费者 | 启动时机 | 引导来源 | 命令形态 |
 |---|---|---|---|
 | 交互终端 / 手动脚本 | 你敲命令时 | TTY 隐藏输入 | `dsh-bws get KEY` / `dsh-bws run …` |
-| 用户级 systemd unit（默认） | 登录后；开了 linger 则**开机即启** | `~/.config/dsh-bws/passphrase`（0600，属主可读） | `ExecStart=… dsh-bws run --passphrase-file … -- <命令>` |
+| 用户级 systemd unit（默认） | 登录后；开了 linger 则**开机即启** | `~/.config/dsh-bws/key`（0600，属主可读） | `ExecStart=… dsh-bws run -- <命令>`（自动读钥匙） |
 | 系统级 unit（必须比用户管理器更早） | 开机，`user@` 之前 | `/etc/dsh-bws/passphrase`（0600，root 可读） | 同上，加 `--data-dir`；或以 `User=` 运行 |
 
 > 本机已执行 `loginctl enable-linger mirror`（`Linger=yes`），所以用户级 unit
@@ -41,7 +41,7 @@ printf '%s' '你的主口令' > /tmp/pw
 systemd-creds encrypt --user --name=dsh-bws /tmp/pw ~/.config/dsh-bws/pass.cred
 rm -f /tmp/pw
 
-# 之后所有命令用 --passphrase-cred 代替 --passphrase-file：
+# 之后所有命令用 --passphrase-cred 代替钥匙文件（把口令存进 systemd-creds）：
 dsh-bws list --passphrase-cred dsh-bws
 dsh-bws run --passphrase-cred dsh-bws --group <项目> -- /usr/bin/ssh -N …
 ```
@@ -59,7 +59,7 @@ dsh-bws run --passphrase-cred dsh-bws --group <项目> -- /usr/bin/ssh -N …
 
 ```bash
 # ① 环境变量（服务自己读 env）：注入后 exec 命令
-dsh-bws run --passphrase-file ~/.config/dsh-bws/passphrase --group <项目> -- \
+dsh-bws run --group <项目> -- \
   /usr/bin/uvicorn app:api --host 127.0.0.1 --port 8080
 
 # ② 只认文件路径的消费者（ssh -i、PGPASSFILE、GOOGLE_APPLICATION_CREDENTIALS）：
@@ -70,10 +70,10 @@ cat >~/tunnels/bin/ssh-<项目> <<'SH'
 exec ssh -i "$DSH_BWS_FILE_SSH_CITYWALK_PEM" -N -L 5432:127.0.0.1:5432 ubuntu@<你的跳板机>
 SH
 chmod 755 ~/tunnels/bin/ssh-<项目>
-dsh-bws run --passphrase-file … --file SSH_CITYWALK_PEM -- ~/tunnels/bin/ssh-<项目>
+dsh-bws run --file SSH_CITYWALK_PEM -- ~/tunnels/bin/ssh-<项目>
 
 # ③ 单个值（脚本内部用，注意别回显到日志）
-PGPASS=$(dsh-bws get --raw CITYWALK_PGPASS --passphrase-file …)
+PGPASS=$(dsh-bws get --raw CITYWALK_PGPASS)
 ```
 
 `--file KEY` 默认写到 `$XDG_RUNTIME_DIR/dsh-bws/<小写键名>`（tmpfs，重启即消失），
@@ -89,7 +89,7 @@ PGPASS=$(dsh-bws get --raw CITYWALK_PGPASS --passphrase-file …)
 
 ```bash
 sm_get(){  # sm_get <KEY> -> 打印 secret 值（保留换行）
-  dsh-bws get --raw "$1" --passphrase-file "$HOME/.config/dsh-bws/passphrase" \
+  dsh-bws get --raw "$1" \
     || die "金库未找到密钥 '$1'"
 }
 ```
@@ -98,18 +98,18 @@ sm_get(){  # sm_get <KEY> -> 打印 secret 值（保留换行）
 
 ```ini
 [Service]
-Environment=DSH_BWS_DATA_DIR=~/.dsh/dsh-bws
+Environment=DSH_BWS_DATA_DIR=%h/.dsh/dsh-bws
 ```
 
 若想连 `tunnel` 脚本都不改，就让 systemd 包一层 CLI（脚本里的 `sm_get` 保持原样即可）：
 
 ```ini
 [Service]
-Environment=DSH_BWS_DATA_DIR=~/.dsh/dsh-bws
-ExecStart=~/.local/bin/dsh-bws run \
-  --passphrase-file %h/.config/dsh-bws/passphrase \
-  --file SM_SSH_KEY -- ~/tunnels/bin/tunnel fg <项目>
+Environment=DSH_BWS_DATA_DIR=%h/.dsh/dsh-bws
+ExecStart=%h/.local/bin/dsh-bws run --file SM_SSH_KEY -- %h/tunnels/bin/tunnel fg <项目>
 ```
+
+（`%h` 是 systemd 的家目录占位符；不写 `--key-file` 时 CLI 自动用 `%h/.config/dsh-bws/key`。）
 
 ## systemd 的坑（实测踩过）
 
@@ -124,7 +124,7 @@ ExecStart=~/.local/bin/dsh-bws run \
 ## 排错
 
 ```bash
-dsh-bws check --passphrase-file ~/.config/dsh-bws/passphrase   # 口令是否可解（0=可以）
+dsh-bws check                                                  # 钥匙是否可解（0=可以）
 echo $?                                                        # 3=口令错 4=键不存在 5=未初始化
 journalctl --user -u <项目>-tunnel -n 50 --no-pager
 ```

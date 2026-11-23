@@ -99,7 +99,7 @@ systemd unit：
 [Service]
 Environment=DSH_BWS_DATA_DIR=%h/.dsh/dsh-bws
 ExecStart=/usr/bin/env node %h/src/dsh-bws/bin/dsh-bws.mjs run \
-  --passphrase-file %h/.config/dsh-bws/pass \
+  # 默认就用 %h/.config/dsh-bws/key，无需参数 \
   -- /path/to/your-service
 ```
 

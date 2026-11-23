@@ -1,6 +1,6 @@
 # dsh-bws
 
-DSH Web GUI 里的**本地加密凭证金库**：口令派生密钥，密文落 SQLite，索引随 git 推到自己的两个远端。
+DSH Web GUI 里的**本地加密凭证金库**：口令派生密钥，密文落 SQLite，索引随 git 推到你自己的远端。
 
 设置 → 内置插件 → **凭证金库**。
 
@@ -65,7 +65,7 @@ $DSH_HOME/dsh-bws/            # 默认 ~/.dsh/dsh-bws
 
 ## 同步
 
-两个远端，名字固定为 `origin`（GitHub）与 `gitee`（Gitee），在面板「同步」页填 URL，然后推送/拉取。
+远端可配一个或两个（面板默认给 `origin` / `gitee` 两个名字），在「同步」页填 URL 后推送/拉取；只填一个也行。
 
 - 推送用的是**本机已有的 git 凭据**（SSH key 或 credential helper），插件不保存任何 git token，也不碰远端账号。
 - 同一台机器 last-write-wins（按 revision）；两台机器改同一条时，拉取会报冲突并保留本地版本，需要人工择一。
@@ -86,11 +86,14 @@ dsh-bws has GITHUB_TOKEN                     # 存在则退出码 0
 dsh-bws get GITHUB_TOKEN [--raw]             # 打印一条值
 dsh-bws run --group <项目> -- ./service    # 注入环境变量后执行
 dsh-bws run --file SSH_KEY -- ssh -i "$DSH_BWS_FILE_SSH_KEY" …   # 物化成 0600 临时文件
-dsh-bws passwd                               # 改主口令（重新封装全部密文并写回本机口令文件）
-dsh-bws check                                # 校验口令
+dsh-bws passwd                               # 改主口令（重新封装全部密文并写回本机钥匙与口令文件）
+dsh-bws key path                             # 本机钥匙文件位置
+dsh-bws key export --out <文件>              # 导出可搬运的钥匙（给另一台机器）
+dsh-bws key import <文件>                    # 导入钥匙（先验能不能开库）
+dsh-bws check                                # 校验本机钥匙/口令能否打开金库
 ```
 
-口令来源按优先级：`--passphrase-file` → `DSH_BWS_PASSPHRASE` → `--passphrase-stdin` → TTY 提示。
+解锁材料按优先级：`--key-file` → `~/.config/dsh-bws/key` → `--passphrase-*` → `DSH_BWS_PASSPHRASE` → TTY 提示。
 数据目录：`--data-dir` → `$DSH_BWS_DATA_DIR` → `$DSH_HOME/dsh-bws` → `~/.dsh/dsh-bws`。
 
 **钥匙落在本机**：面板里「创建金库」时会自动写两个 0600 文件——
@@ -115,7 +118,7 @@ dsh-bws check                                # 校验口令
 
 ## Agent 工具
 
-装了插件后，会话里多两个工具（Host 侧注册，`lib/tools.js`）：
+装了插件后，会话里多三个工具（Host 侧注册，`lib/tools.js`）：
 
 | 工具 | 做什么 | 边界 |
 |---|---|---|
